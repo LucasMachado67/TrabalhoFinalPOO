@@ -16,54 +16,12 @@
     <maven.compiler.target>23</maven.compiler.target>
   </properties>
   
-
   <dependencies>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>3.8.1</version>
-      <scope>test</scope>
-    </dependency>
-    
-	<dependency>
-	    <groupId>org.apache.tika</groupId>
-	    <artifactId>tika-core</artifactId>
-	    <version>3.0.0-BETA</version>
+	    <groupId>org.junit.jupiter</groupId>
+	    <artifactId>junit-jupiter</artifactId>
+	    <version>5.10.0</version>
+	    <scope>test</scope>
 	</dependency>
-	<dependency>
-	    <groupId>org.apache.tika</groupId>
-	    <artifactId>tika-parsers-standard-package</artifactId>
-	    <version>3.0.0-BETA</version>
-	</dependency>
-		<dependency>
-	    <groupId>org.slf4j</groupId>
-	    <artifactId>slf4j-simple</artifactId>
-	    <version>2.0.13</version>
-	</dependency>
-
-    <dependency>
-	    <groupId>org.apache.pdfbox</groupId>
-	    <artifactId>pdfbox</artifactId>
-	    <version>2.0.29</version>
-	</dependency>
-
-    <dependency>
-	    <groupId>com.mpatric</groupId>
-	    <artifactId>mp3agic</artifactId>
-	    <version>0.9.1</version>
-	</dependency>
-	
-	<dependency>
-	    <groupId>org.mp4parser</groupId>
-	    <artifactId>isoparser</artifactId>
-	    <version>1.9.41</version>
-	</dependency>
-	
-	<dependency>
-	  <groupId>net.bramp.ffmpeg</groupId>
-	  <artifactId>ffmpeg</artifactId>
-	  <version>0.8.0</version>
-	</dependency>
-
   </dependencies>
 </project>

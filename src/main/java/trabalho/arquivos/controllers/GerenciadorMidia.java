@@ -10,31 +10,46 @@ import trabalho.arquivos.classes.Livro;
 import trabalho.arquivos.classes.Midia;
 import trabalho.arquivos.classes.Musica;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Comparator;
 
+/**
+ * Controlador responsável pela gestão de mídias no Sistema.
+ * <p>
+ * Permite adicionar, editar, remover, mover, renomear e listar mídias, assim como 
+ * carregar automaticamente mídias salvas do disco.
+ * </p>
+ * <p>
+ * Os arquivos de mídia são salvos em formato .tpoo na pasta "C:\Users\LucasMachado\eclipse-workspace\Testes".
+ * </p>
+ * 
+ */
 public class GerenciadorMidia {
+	/** Lista interna de mídias gerenciadas pelo sistema */
+	private List<Midia> midias = new ArrayList<>();
 	
+	/**
+     * Construtor da classe. Inicializa o gerenciador carregando mídias do disco.
+     */
 	public GerenciadorMidia() {
 	    carregarMidiasDoDisco();
 	}
 	
-	private List<Midia> midias = new ArrayList<>();
-	
-	public void adicionarMidia(Midia midia) {
+	/**
+     * Adiciona uma mídia ao sistema e a salva em disco.
+     * 
+     * @param midia Objeto {@link Midia} a ser adicionado
+	 * @throws IOException 
+     * @throws IllegalArgumentException Se os dados da mídia forem inválidos
+     */
+	public void adicionarMidia(Midia midia) throws IOException {
 		
 		boolean resultado = validadorCampos(midia);
 		if(resultado == false) {
-			System.out.println("DEBUG:");
-			System.out.println("Local: " + midia.getLocal());
-			System.out.println("Titulo: " + midia.getTitulo());
-			System.out.println("Categoria: " + midia.getCategoria());
-			System.out.println("Tipo: " + midia.getTipo());
 			throw new IllegalArgumentException("As credênciais da mídia estão incorretas ou faltando");
 		}
 		this.midias.add(midia);
@@ -48,101 +63,34 @@ public class GerenciadorMidia {
 			throw new IllegalAccessError();
 		}
 	}
-	
+	/**
+     * Carrega uma mídia a partir de um arquivo .tpoo.
+     * 
+     * @param arquivo Arquivo .tpoo a ser lido
+     * @return Objeto {@link Midia} carregado
+     */
 	public Midia carregarMidia(File arquivo) {
-		
-		Midia midia = null;
-		
-		try(BufferedReader reader = new BufferedReader(new FileReader(arquivo))){
-			
-			String linha;
-			String tipo = "";
-			String titulo = "";
-			String local = "";
-			String categoria = "";
-			String duracao = "";
-			String tamanho = "";
-			
-	        while ((linha = reader.readLine()) != null) {
-
-	        	if (linha.startsWith("Tipo:")) {
-	                tipo = linha.substring(5).trim();
-
-	                switch (tipo) {
-	                    case "Livro":
-	                        midia = new Livro("", "", "");
-	                        break;
-	                    case "Música":
-	                        midia = new Musica("", "", "", "");
-	                        break;
-	                    case "Filme":
-	                        midia = new Filme("", "", "", "");
-	                        break;
-	                    default:
-	                        throw new RuntimeException("Tipo desconhecido: " + tipo);
-	                }
-	            }else if (linha.startsWith("Título:")) {
-	                titulo = linha.substring(7).trim();
-	                midia.setTitulo(titulo);
-
-	            } else if (linha.startsWith("Local:")) {
-	                local = linha.substring(6).trim();
-	                midia.setLocal(local);
-
-	            } else if (linha.startsWith("Tamanho:")) {
-	                tamanho = linha.substring(8).trim().replace(" bytes", "");
-	                midia.setTamanho(Long.parseLong(tamanho));
-
-	            } else if (linha.startsWith("Categoria:")) {
-	            	categoria = linha.substring(10).trim();
-	            	midia.setCategoria(categoria);
-
-	            } else if (linha.startsWith("Duração:")) {
-	                duracao = linha.substring(8).trim();
-	                midia.setDuracao(Integer.parseInt(duracao));
-	            }
-	            else if (linha.startsWith("Idioma:") && midia instanceof Filme) {
-	                ((Filme) midia).setIdioma(linha.substring(7).trim());
-	            }
-
-	            else if (linha.startsWith("Artista:") && midia instanceof Musica) {
-	                ((Musica) midia).setArtista(linha.substring(8).trim());
-	            }
-
-	            else if (linha.startsWith("Autor:") && midia instanceof Livro) {
-	                String autor = linha.substring(6).trim();
-	                ((Livro) midia).setAutor(autor); // adiciona na lista interna
-	            }
-	        
-	        }
-		}catch (Exception e) {
-	        e.printStackTrace();
+		if (arquivo == null || !arquivo.exists()) {
+	        throw new IllegalArgumentException("Arquivo inválido");
 	    }
-		return midia;
+		return ArquivoMidiaUtils.carregarMidia(arquivo);
+		
 	}
-	
-	public void editarMidia(Midia midia, String tituloAntigo) {
+	/**
+     * Edita uma mídia existente, atualizando arquivo e lista interna.
+     * 
+     * @param midia        Objeto {@link Midia} atualizado
+     * @param tituloAntigo Título antigo da mídia
+	 * @throws IOException 
+     * @throws IllegalArgumentException Se os dados da mídia forem inválidos
+     */
+	public void editarMidia(Midia midia, String tituloAntigo) throws IOException {
 		// validacao
         if (!validadorCampos(midia)) {
             throw new IllegalArgumentException("Dados inválidos");
         }
 
-        // remove arquivo antigo se o título mudou
-        if (!midia.getTitulo().equals(tituloAntigo)) {
-            File pasta = new File("C:\\Users\\LucasMachado\\eclipse-workspace\\arquivos\\ArquivosTeste");
-            File oldFile = new File(pasta, tituloAntigo.replace(" ", "_") + ".tpoo");
-
-            if (oldFile.exists()) oldFile.delete();
-        }
-
-        // atualiza arquivo
-        if (midia instanceof Livro) {
-            ArquivoMidiaUtils.salvarMidiaEpubOrPdf(midia);
-        } else if (midia instanceof Musica) {
-            ArquivoMidiaUtils.salvarMidiaMusica(midia);
-        } else if (midia instanceof Filme) {
-            ArquivoMidiaUtils.salvarMidiaFilme(midia);
-        }
+        ArquivoMidiaUtils.editarMidiaArquivo(midia, tituloAntigo);
 
         // substitui na lista
         for (int i = 0; i < midias.size(); i++) {
@@ -152,77 +100,148 @@ public class GerenciadorMidia {
             }
         }
 	}
-	
+	/**
+     * Retorna uma cópia da lista de todas as mídias cadastradas.
+     * 
+     * @return Lista de mídias
+     */
 	public List<Midia> listarMidias() {
 		return new ArrayList<>(midias);
 	}
 	
-	public List<Midia> filtrarPorCategoria(String categoria){
-		return midias.stream()
-				.filter(m -> m.getCategoria().equalsIgnoreCase(categoria))
-				.toList();
-	}
-	
-	public void removerMidia(Midia midia) {
-		File dir = new File("C:\\Users\\LucasMachado\\eclipse-workspace\\arquivos\\ArquivosTeste");
-		String tituloFormatado = midia.getTitulo().trim().replace(" ", "_");
-		File arquivoToDelete = new File(dir, tituloFormatado + ".tpoo");
-		if (arquivoToDelete.exists()) {
-	        boolean deletado = arquivoToDelete.delete();
 
-	        if (deletado) {
-	            System.out.println("Arquivo .tpoo removido: " + arquivoToDelete.getAbsolutePath());
-	        } else {
-	            System.out.println("Falha ao remover arquivo: " + arquivoToDelete.getAbsolutePath());
-	        }
-	    } else {
-	        System.out.println("Arquivo .tpoo não encontrado: " + arquivoToDelete.getAbsolutePath());
-	    }
+	/**
+     * Remove uma mídia do sistema e de disco.
+     * 
+     * @param midia Objeto {@link Midia} a ser removido
+     */
+	public void removerMidia(Midia midia) {
+		
+		ArquivoMidiaUtils.removerMidia(midia);
 		this.midias.remove(midia);
 		JOptionPane.showMessageDialog(null, "Arquivo " + midia.getTitulo()+" deletado com sucesso", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
-		
 	}
-	
+	/**
+     * Move o arquivo físico de uma mídia para um novo caminho.
+     * 
+     * @param midia      Objeto {@link Midia} a ser movido
+     * @param novoCaminho Caminho destino
+     */
 	public void moverMidia(Midia midia, String novoCaminho) {
-			
-		File arquivoAntigo = new File(midia.getLocal());
-		File novoArquivo = new File(novoCaminho, arquivoAntigo.getName());
 		
 		try {
-			Files.move(arquivoAntigo.toPath(), novoArquivo.toPath(), StandardCopyOption.REPLACE_EXISTING);
+			File arquivoOrigem = new File(midia.getLocal());
+			File arquivoDestino = new File(novoCaminho, arquivoOrigem.getName());
+			
+			Files.move(arquivoOrigem.toPath(), arquivoDestino.toPath(), StandardCopyOption.REPLACE_EXISTING);
+			
+			//Atualizando o objeto mídia no sistema
+			midia.setLocal(arquivoDestino.getAbsolutePath());
+			
+			ArquivoMidiaUtils.editarMidiaArquivo(midia, midia.getTitulo());
+		}catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			JOptionPane.showMessageDialog(null, "Erro: " + e.getMessage());
+		}	
+	}
+	/**
+     * Renomeia uma mídia, atualizando arquivo e objeto.
+     * 
+     * @param midia    Objeto {@link Midia} a ser renomeado
+     * @param novoNome Novo título
+     * @return true se a operação foi bem-sucedida, false caso contrário
+     */
+	public boolean renomearMidia(Midia midia, String novoNome) {
+			
+		 try {
+		        // guarda o título antigo para o util para conseguir utilizar o método edit
+		        String tituloAntigo = midia.getTitulo();
+		        
+		        File arquivoAntigo = new File(midia.getLocal());
+		        if (!arquivoAntigo.exists()) {
+		            System.out.println("Arquivo de mídia não encontrado: " + midia.getLocal());
+		            return false;
+		        }
 
-			midia.setLocal(novoArquivo.getAbsolutePath());
-			System.out.println("Mídia movida com sucesso para: " + novoArquivo.getAbsolutePath());
-		} catch (IOException e) {
-	        System.out.println("Erro ao mover a mídia: " + e.getMessage());
-	        e.printStackTrace();
-	    } 
+		        // pega extensão e monta novo arquivo
+		        String nomeAntigo = arquivoAntigo.getName();
+		        String extensao = "";
+		        int idx = nomeAntigo.lastIndexOf('.');
+		        if (idx > 0) extensao = nomeAntigo.substring(idx);
+		        String novoNomeFinal = novoNome + extensao;
+
+		        File arquivoNovo = new File(arquivoAntigo.getParent(), novoNomeFinal);
+
+		        
+		        Files.move(arquivoAntigo.toPath(), arquivoNovo.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+		        //Atualizando o objeto de mídia para o sistema
+		        midia.setTitulo(novoNome);
+		        midia.setLocal(arquivoNovo.getAbsolutePath());
+
+		        // Usando o utils para recriar o tpoo com o local do arquivo atualizado e o titulo
+		        ArquivoMidiaUtils.editarMidiaArquivo(midia, tituloAntigo);
+
+		        return true;
+		    } catch (Exception ex) {
+		        ex.printStackTrace();
+		        return false;
+		    }
 	}
-	
-	public void renomearMidia(Midia midia, String novoNome) {
+	/**
+     * Lista mídias filtradas pelo tipo/formato.
+     * 
+     * @param formato Tipo de mídia ("Livro", "Música", "Filme")
+     * @param midias Lista a ser ordenada
+     * @return Lista filtrada
+     */
+	public List<Midia> listarPorFormato(String formato,List<Midia> midias){
+
+		return midias = midias.stream()
+		        .filter(m -> m.getTipo().equalsIgnoreCase(formato))
+		        .toList();
+	}
+	/**
+     * Lista mídias filtradas pela categoria.
+     * 
+     * @param categoria Categoria da mídia
+     * @param midias Lista a ser ordenada
+     * @return Lista filtrada
+     */
+	public List<Midia> listarPorCategoria(String categoria,List<Midia> midias){
+		return midias = midias.stream()
+                .filter(m -> m.getCategoria().equalsIgnoreCase(categoria))
+                .toList();
+	}
+	/**
+     * Ordena a lista de mídias pelo título em ordem alfabética.
+     * 
+     * @param midias Lista a ser ordenada
+     */
+	public List<Midia> ordenarPorTitulo(List<Midia> midias) {
 		
+		midias= new ArrayList<>(midias);
+		midias.sort(Comparator.comparing(
+                Midia::getTitulo, String.CASE_INSENSITIVE_ORDER));
+        return midias;
 	}
-	
-	public List<Midia> listarPorFormato(String formato){
-		
-		List<Midia> lista = new ArrayList<>();
-		for (Midia midia : midias) {
-			if(formato.equals(midia.getTipo())) {
-				lista.add(midia);
-			}
-		}
-		
-		return lista;
+	/**
+     * Ordena a lista de mídias pela duração em ordem decrescente.
+     * 
+     * @param midias Lista a ser ordenada
+     */
+	public List<Midia> ordenarPorDuracao(List<Midia> midias) {
+		midias = new ArrayList<>(midias);
+		midias.sort(Comparator.comparingInt(Midia::getDuracao));
+		return midias;
 	}
-	
-	public void ordenarPorTitulo(List<Midia> midias) {
-		midias.sort((m1, m2) -> m1.getTitulo().compareToIgnoreCase(m2.getTitulo()));
-	}
-	
-	public void ordenarPorDuracao(List<Midia> midias) {
-		midias.sort((m1,m2) -> Double.compare(m2.getDuracao(), m1.getDuracao()));
-	}
-	
+	/**
+     * Valida os campos obrigatórios de uma mídia.
+     * 
+     * @param midia Objeto {@link Midia} a validar
+     * @return true se válido, false caso contrário
+     */
 	private boolean validadorCampos(Midia midia) {
 		
 		if(midia.getLocal() == null || midia.getLocal().isBlank()) return false;
@@ -248,11 +267,13 @@ public class GerenciadorMidia {
 	            return false;
 	    }
 	}
-	
+	/**
+     * Carrega todas as mídias salvas do disco e atualiza a lista interna.
+     */
 	private void carregarMidiasDoDisco() {
 		midias.clear();
 		
-		File pasta = new File("C:\\Users\\LucasMachado\\eclipse-workspace\\arquivos\\ArquivosTeste");
+		File pasta = new File("C:\\Users\\LucasMachado\\eclipse-workspace\\Testes");
 		
 		if (!pasta.exists()) return;
 		

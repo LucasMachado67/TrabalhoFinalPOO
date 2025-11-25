@@ -1,65 +1,76 @@
 package trabalho.arquivos.classes;
+
 import java.io.File;
+import trabalho.arquivos.Utils.ArquivoMidiaUtils;
 
-import javax.swing.JOptionPane;
-
-import org.mp4parser.IsoFile;
-
-import net.bramp.ffmpeg.FFprobe;
-import net.bramp.ffmpeg.probe.FFmpegFormat;
-import net.bramp.ffmpeg.probe.FFmpegProbeResult;
-
+/**
+ * Classe que representa um filme, extensão da classe {@link Midia}.
+ * <p>
+ * Cada filme possui informações sobre o idioma, além dos atributos herdados de {@link Midia}
+ * como título, categoria, local do arquivo, tamanho e duração.
+ * </p>
+ * <p>
+ * A duração do filme é calculada automaticamente com base no arquivo de vídeo,
+ * suportando arquivos nos formatos MP4 e MKV.
+ * </p>
+ */
 public class Filme extends Midia{
-	
+	/** Idioma do filme */
 	private String idioma;
-	
+	/**
+     * Construtor da classe Filme.
+     * 
+     * @param local    Caminho do arquivo do filme
+     * @param titulo   Título do filme
+     * @param categoria Categoria do filme
+     * @param idioma   Idioma do filme
+     */
 	public Filme(String local, String titulo, String categoria, String idioma) {
 		super(local, titulo, categoria);
 		setDuracao(calcularDuracao(local));
 		setIdioma(idioma);
 	}
-
+	/**
+     * Retorna o tipo da mídia.
+     * 
+     * @return "Filme" como tipo da mídia
+     */
 	@Override
 	public String getTipo() {
 		return "Filme";
 	}
-
+	/** Recupera o idioma do arquivo*/
 	public String getIdioma() {
 		return idioma;
 	}
-
+	/** Define o idioma do arquivo*/
 	public void setIdioma(String idioma) {
 		this.idioma = idioma;
 	}
-	
+	/**
+     * Calcula a duração do filme em minutos com base no arquivo de vídeo.
+     * <p>
+     * Suporta arquivos nos formatos MP4 e MKV. Caso ocorra algum erro na leitura do arquivo,
+     * retorna 0.
+     * </p>
+     * 
+     * @param local Caminho do arquivo do filme
+     * @return Duração do filme em minutos
+     */
 	@Override
     public int calcularDuracao(String local) {
 		
 		//Validação isnicial para ver qual o tipo de extensao que o usuario seleciona
 		File arquivo = new File(local);
 		String nomeArquivo = arquivo.getName();
-		
 		String extensao = "";
 		int i = nomeArquivo.lastIndexOf('.');
 		extensao = nomeArquivo.substring(i + 1);
+		
 		if(extensao.equals("mp4")) {
 			try {
-				// Lê o MP4
-				IsoFile isoFile = new IsoFile(local);
-				
-				long duration = isoFile.getMovieBox().getMovieHeaderBox().getDuration();
-				long timescale = isoFile.getMovieBox().getMovieHeaderBox().getTimescale();
-				
-				if (timescale == 0) {	        	
-					isoFile.close(); 
-					return 0;
-				}
-				
-				double seconds = (double) duration / timescale;
-				int minutos = (int) Math.ceil(seconds / 60.0);
-				
-				isoFile.close(); 
-				return minutos;
+				int minutos = ArquivoMidiaUtils.calcularDuracaoMp4(local);
+				return this.duracao = minutos;
 				
 			} catch (Exception e) {
 				System.out.println("Erro ao ler duração do vídeo: " + e.getMessage());
@@ -67,13 +78,9 @@ public class Filme extends Midia{
 			}
 		}else if(extensao.equals("mkv")){
 			try {
-				FFprobe ffprobe = new FFprobe("C:\\devTools\\ffmpeg-8.0-essentials_build\\bin\\ffprobe.exe");
-				FFmpegProbeResult probeResult = ffprobe.probe(local);
+				int minutos = ArquivoMidiaUtils.calcularDuracaoMkv(local);
 				
-				FFmpegFormat format = probeResult.getFormat();
-				double duration = format.duration;
-				int minutos = (int) Math.ceil(duration / 60.0);
-				return minutos;
+				return this.duracao = minutos;
 				
 			} catch (Exception e) {
 				System.out.println("Erro ao ler duração do vídeo: " + e.getMessage());

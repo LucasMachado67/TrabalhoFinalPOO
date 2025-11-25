@@ -5,9 +5,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -25,22 +27,52 @@ import trabalho.arquivos.classes.Midia;
 import trabalho.arquivos.classes.Musica;
 import trabalho.arquivos.controllers.GerenciadorMidia;
 
+/**
+ * Tela para editar uma mídia existente no sistema.
+ * <p>
+ * Permite ao usuário alterar informações de filmes, músicas ou livros, incluindo
+ * título, categoria, atributos específicos (idioma, artista ou autores) e caminho do arquivo.
+ * </p>
+ * <p>
+ * Esta tela deve ser aberta a partir de uma {@link ListaArquivos} ou de outra
+ * interface que possua referência ao objeto {@link GerenciadorMidia}.
+ * </p>
+ */
 public class EditarArquivo extends JFrame {
 
 	private static final long serialVersionUID = 1L;
 	private JPanel contentPane;
+	/** Mídia a ser editada */
 	private Midia midia;
-	private JTextField textFieldLocal;
-	private JTextField textFieldTitulo;
-	private JTextField textFieldCategoria;
-	private JTextField textFieldEspecifico;
-	ArrayList<String> autores = new ArrayList<String>();
-	private DefaultListModel<String> modeloAutores = new DefaultListModel<>();
-	private String tituloOriginal;
+	 /** Campo de texto para o local do arquivo */
+    private JTextField textFieldLocal;
 
-	/**
-	 * Launch the application.
-	 */
+    /** Campo de texto para o título da mídia */
+    private JTextField textFieldTitulo;
+
+    /** Campo de texto para atributos específicos (idioma, artista, autores) */
+    private JTextField textFieldEspecifico;
+
+    /** ComboBox para seleção da categoria */
+    private JComboBox<String> comboBoxCategoria;
+
+    /** Lista de autores para livros */
+    ArrayList<String> autores = new ArrayList<String>();
+
+    /** Modelo de lista usado para exibir autores no JList */
+    private DefaultListModel<String> modeloAutores = new DefaultListModel<>();
+
+    /** Título original da mídia, usado para identificar a mídia no GerenciadorMidia */
+    private String tituloOriginal;
+
+    /**
+     * Ponto de entrada da aplicação para teste da tela.
+     * <p>
+     * Cria e exibe a tela em uma thread segura de GUI.
+     * </p>
+     * 
+     * @param args argumentos da linha de comando (não utilizados)
+     */
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
@@ -55,12 +87,22 @@ public class EditarArquivo extends JFrame {
 	}
 
 	/**
-	 * Create the frame.
-	 */
+     * Construtor padrão.
+     */
 	public EditarArquivo() {
 	       this(null, null, null);
 	}
-	 
+	/**
+     * Construtor principal.
+     * <p>
+     * Inicializa a tela de edição com os dados da mídia fornecida, gerenciador de mídias
+     * e referência à tela que lista as mídias.
+     * </p>
+     * 
+     * @param midia       objeto {@link Midia} a ser editado
+     * @param gerenciador objeto {@link GerenciadorMidia} responsável por gerenciar mídias
+     * @param telaLista   referência da {@link ListaArquivos} para atualizar a tabela após edição
+     */
 	public EditarArquivo(Midia midia, GerenciadorMidia gerenciador, ListaArquivos telaLista) {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 450, 300);
@@ -101,11 +143,9 @@ public class EditarArquivo extends JFrame {
 		JLabel lblCategoria = new JLabel("Categoria");
 		lblCategoria.setBounds(23, 198, 69, 12);
 		contentPane.add(lblCategoria);
-		
-		textFieldCategoria = new JTextField();
-		textFieldCategoria.setBounds(23, 215, 259, 18);
-		contentPane.add(textFieldCategoria);
-		textFieldCategoria.setColumns(10);
+		comboBoxCategoria = new JComboBox<>();
+		comboBoxCategoria.setBounds(23, 215, 259, 18);
+		contentPane.add(comboBoxCategoria);
 		
 		//COMPONENTES ESPECÍFICO
 		JLabel lblEspecifico = new JLabel();
@@ -124,11 +164,11 @@ public class EditarArquivo extends JFrame {
 		listAutores.setModel(modeloAutores); 
 		listAutores.setBounds(1, 1, 16, 20);
 		contentPane.add(listAutores);
-		
+		//Scroll para a lista, caso ela for muito grande
 		JScrollPane scrollAutores = new JScrollPane(listAutores);
 		scrollAutores.setBounds(23, 326, 259, 105);
 		contentPane.add(scrollAutores);
-		
+		//Adiciona um autor a lista
 		JButton btnAdicionar = new JButton("ADD");
 		btnAdicionar.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -141,7 +181,7 @@ public class EditarArquivo extends JFrame {
 		});
 		btnAdicionar.setBounds(198, 286, 84, 20);
 		contentPane.add(btnAdicionar);
-		
+		//Remove o autor da lista
 		JButton btnRemover = new JButton("Remover Autor Selecionado");
 		btnRemover.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -169,6 +209,9 @@ public class EditarArquivo extends JFrame {
 
 	    if (tipo.equals("Livro")) {
 	    	Livro livro = (Livro) midia;
+	    	for(String l : categoriasLivroEFilme()) {
+	    		comboBoxCategoria.addItem(l);
+	    	}
 	        lblEspecifico.setText("Autores");
 	        btnAdicionar.setVisible(true);
 	        listAutores.setVisible(true);
@@ -181,17 +224,23 @@ public class EditarArquivo extends JFrame {
 	        }
 
 	    } else if (tipo.equals("Filme")) {
+	    	Filme filme = (Filme) midia;
 	        lblEspecifico.setText("Idioma");
-	        Filme filme = (Filme) midia;
+	        for(String l : categoriasLivroEFilme()) {
+	    		comboBoxCategoria.addItem(l);
+	    	}
 	        textFieldEspecifico.setText(filme.getIdioma());
 
-	    } else if (tipo.equals("Musica")) {
+	    } else if (tipo.equals("Música")) {
+	    	Musica musica = (Musica) midia;
+	    	for(String l : categoriasMusica()) {
+	    		comboBoxCategoria.addItem(l);
+	    	}
 	        lblEspecifico.setText("Artista");
-	        Musica musica = (Musica) midia;
 	        textFieldEspecifico.setText(musica.getArtista());
 	    }
 	    
-	    
+	    //Salva as alterações feitas dentro do arquivo .tpoo
 		JButton btnSalvar = new JButton("Salvar");
 		btnSalvar.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {		
@@ -200,7 +249,7 @@ public class EditarArquivo extends JFrame {
 					
 			       midia.setLocal(textFieldLocal.getText());
 			       midia.setTitulo(textFieldTitulo.getText());
-			       midia.setCategoria(textFieldCategoria.getText());
+			       midia.setCategoria(comboBoxCategoria.getSelectedItem().toString());
 			       if (midia instanceof Filme) {
 			    	    ((Filme) midia).setIdioma(textFieldEspecifico.getText());
 			    	}else if (midia instanceof Musica) {
@@ -229,11 +278,10 @@ public class EditarArquivo extends JFrame {
 		btnSalvar.setBounds(332, 426, 126, 35);
 		contentPane.add(btnSalvar);
 		
+		//Retorna a tela de listar
 		JButton btnCancelar = new JButton("Cancelar");
 		btnCancelar.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				TelaInicial telaInicial = new TelaInicial();
-				telaInicial.setVisible(true);
 
                 // Dispose, fecha a tela atual
                 dispose();
@@ -266,7 +314,7 @@ public class EditarArquivo extends JFrame {
 				}else {
 					//Irá buscar todos os arquvios caso não for selecionado
 				}
-				JFileChooser chooser = new JFileChooser(new File("C:\\Users\\LucasMachado\\eclipse-workspace\\arquivos\\ArquivosTeste"));
+				JFileChooser chooser = new JFileChooser(new File("C:\\Users\\LucasMachado\\eclipse-workspace\\Testes"));
 				chooser.setFileFilter(filter);
 				int retorno = chooser.showOpenDialog(null);
 		    	if(retorno == JFileChooser.APPROVE_OPTION) {
@@ -282,10 +330,47 @@ public class EditarArquivo extends JFrame {
 		carregarDados(); 
         
 	}
-	
+	/**
+     * Carrega os dados atuais da mídia nos campos da interface.
+     * <p>
+     * Atualiza os campos de texto e a seleção de categoria.
+     * </p>
+     */
 	public void carregarDados() {
 		textFieldLocal.setText(midia.getLocal());
 		textFieldTitulo.setText(midia.getTitulo());
-		textFieldCategoria.setText(midia.getCategoria());
+		comboBoxCategoria.setSelectedItem(midia.getCategoria());
+	}
+	/**
+     * Retorna a lista de categorias possíveis para livros e filmes.
+     * 
+     * @return lista de categorias (Aventura, Ação, Romance, Suspense, Terror)
+     */
+	private List<String> categoriasLivroEFilme(){
+		List<String> lista = new ArrayList<>();
+		
+		lista.add("Aventura");
+		lista.add("Ação");
+		lista.add("Romance");
+		lista.add("Suspense");
+		lista.add("Terror");
+		
+		return lista;
+	}	
+	/**
+     * Retorna a lista de categorias possíveis para músicas.
+     * 
+     * @return lista de categorias (POP, Jazz, Rock, Eletrônica, Indie)
+     */
+	private List<String> categoriasMusica(){
+		List<String> lista = new ArrayList<>();
+		
+		lista.add("POP");
+		lista.add("Jazz");
+		lista.add("Rock");
+		lista.add("Eletrônica");
+		lista.add("Indie");
+		
+		return lista;
 	}
 }

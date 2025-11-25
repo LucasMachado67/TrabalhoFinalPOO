@@ -6,6 +6,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -28,21 +29,41 @@ import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
-
+/**
+ * Tela para inserir uma nova mídia no sistema.
+ * <p>
+ * Permite ao usuário cadastrar filmes, músicas ou livros, selecionando o arquivo
+ * no disco, definindo título, categoria e atributos específicos de cada tipo
+ * (como idioma, artista ou autores).
+ * </p>
+ * <p>
+ * Esta tela é aberta a partir da {@link TelaInicial}.
+ * </p>
+ * 
+ */
 public class InserirNovo extends JFrame {
 
 	private static final long serialVersionUID = 1L;
 	private JPanel contentPane;
+	/** Campo de texto para o local do arquivo */
 	private JTextField textFieldLocal;
+	 /** Campo de texto para o título da mídia */
 	private JTextField textFieldTitulo;
-	private JTextField textFieldCategoria;
+	/** Campo de texto para atributos específicos (idioma, artista, autores) */
 	private JTextField textFieldEspecifico;
+	/** Lista de autores para livros */
 	ArrayList<String> autores = new ArrayList<String>();
+	 /** Modelo de lista usado para exibir autores no JList */
 	private DefaultListModel<String> modeloAutores = new DefaultListModel<>();
 
 	/**
-	 * Launch the application.
-	 */
+     * Ponto de entrada da aplicação para teste da tela.
+     * <p>
+     * Cria e exibe a tela em uma thread segura de GUI.
+     * </p>
+     * 
+     * @param args argumentos da linha de comando (não utilizados)
+     */
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
@@ -57,8 +78,13 @@ public class InserirNovo extends JFrame {
 	}
 
 	/**
-	 * Create the frame.
-	 */
+     * Construtor da tela.
+     * <p>
+     * Configura todos os componentes da interface, incluindo campos de texto,
+     * botões e eventos de ação. Também lida com exibir/ocultar componentes
+     * específicos de acordo com o tipo de mídia selecionado.
+     * </p>
+     */
 	public InserirNovo() {
 		setTitle("Novo Arquivo");
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -100,14 +126,9 @@ public class InserirNovo extends JFrame {
 		textFieldTitulo.setBounds(23, 170, 259, 18);
 		contentPane.add(textFieldTitulo);
 		
-		JLabel lblCategoria = new JLabel("Categoria");
-		lblCategoria.setBounds(23, 198, 69, 12);
-		contentPane.add(lblCategoria);
-		
-		textFieldCategoria = new JTextField();
-		textFieldCategoria.setBounds(23, 215, 259, 18);
-		contentPane.add(textFieldCategoria);
-		textFieldCategoria.setColumns(10);
+		JComboBox<String> comboBoxCategoria = new JComboBox<>();
+		comboBoxCategoria.setBounds(23, 217, 259, 20);
+		contentPane.add(comboBoxCategoria);
 		
 		//COMPONENTES ESPECÍFICO
 		JLabel lblEspecifico = new JLabel();
@@ -178,6 +199,8 @@ public class InserirNovo extends JFrame {
 		         * LIVRO - autores (List<String>)
 		         *
 		         */
+		        //Remove as seleções de categorias
+		        comboBoxCategoria.removeAllItems();
 		        
 		        // Esconde todos primeiro a cada requisição
 		        lblEspecifico.setVisible(false);
@@ -192,14 +215,23 @@ public class InserirNovo extends JFrame {
 		        textFieldEspecifico.setVisible(true);
 		        // Mostra só o correspondente
 		        if (selecionado.equals("Livro")) {
+		        	for(String l : categoriasLivroEFilme()) {
+		        		comboBoxCategoria.addItem(l);
+		        	}
 		        	lblEspecifico.setText("Autores");
 		        	btnAdicionar.setVisible(true);
 		        	listAutores.setVisible(true);
 		        	btnRemover.setVisible(true);
 		        	scrollAutores.setVisible(true);
 		        } else if (selecionado.equals("Filme")) {
+		        	for(String l : categoriasLivroEFilme()) {
+		        		comboBoxCategoria.addItem(l);
+		        	}
 		        	lblEspecifico.setText("Idioma");
 		        } else if (selecionado.equals("Musica")) {
+		        	for(String l : categoriasMusica()) {
+		        		comboBoxCategoria.addItem(l);
+		        	}
 		        	lblEspecifico.setText("Artista");
 		        }
 		    }
@@ -213,7 +245,7 @@ public class InserirNovo extends JFrame {
 
 			        String caminho = textFieldLocal.getText();
 			        String titulo = textFieldTitulo.getText();
-			        String categoria = textFieldCategoria.getText();
+			        String categoria = comboBoxCategoria.getSelectedItem().toString();
 			        String especifico = textFieldEspecifico.getText();
 			        String tipo = (String) comboBoxTipo.getSelectedItem();
 
@@ -269,7 +301,7 @@ public class InserirNovo extends JFrame {
 				}else {
 					//Irá buscar todos os arquvios caso não for selecionado
 				}
-				JFileChooser chooser = new JFileChooser(new File("C:\\Users\\LucasMachado\\eclipse-workspace\\arquivos\\ArquivosTeste"));
+				JFileChooser chooser = new JFileChooser(new File("C:\\Users\\LucasMachado\\eclipse-workspace\\Testes"));
 				chooser.setFileFilter(filter);
 				int retorno = chooser.showOpenDialog(null);
 		    	if(retorno == JFileChooser.APPROVE_OPTION) {
@@ -280,7 +312,20 @@ public class InserirNovo extends JFrame {
 		});
 		btnEscolherArquivo.setBounds(23, 119, 84, 20);
 		contentPane.add(btnEscolherArquivo);
+		
+		JLabel lblCategoria = new JLabel("Categoria");
+		lblCategoria.setBounds(23, 198, 84, 12);
+		contentPane.add(lblCategoria);
+		
+		
 	}
+	
+	/**
+     * Fecha a tela atual e exibe uma mensagem de sucesso.
+     * <p>
+     * Após fechar a tela, reabre a {@link TelaInicial}.
+     * </p>
+     */
 	public void fecharTela() {
 		JOptionPane.showMessageDialog(null, "Arquivo cadastrado com sucesso!","sucesso", JOptionPane.INFORMATION_MESSAGE);
 		TelaInicial telaInicial = new TelaInicial();
@@ -288,7 +333,18 @@ public class InserirNovo extends JFrame {
         // Dispose, fecha a tela atual
         dispose();
 	}
-	
+	/**
+     * Cria uma instância de {@link Midia} baseada nos dados fornecidos pelo usuário.
+     * 
+     * @param tipo      o tipo de mídia ("Musica", "Filme", "Livro")
+     * @param caminho   caminho completo do arquivo no disco
+     * @param titulo    título da mídia
+     * @param categoria categoria selecionada
+     * @param especifico atributo específico (artista, idioma ou autores)
+     * @return objeto {@link Midia} correspondente ao tipo selecionado
+     * @throws IOException
+     * @throws UnsupportedAudioFileException
+     */
 	private Midia criarMidia(String tipo, String caminho, String titulo,
             String categoria, String especifico)
 		throws IOException, UnsupportedAudioFileException {
@@ -311,5 +367,37 @@ public class InserirNovo extends JFrame {
 			default:
 				throw new IllegalArgumentException("Tipo inválido: " + tipo);
 		}
+	}
+	/**
+     * Retorna a lista de categorias possíveis para livros e filmes.
+     * 
+     * @return lista de categorias (Aventura, Ação, Romance, Suspense, Terror)
+     */
+	private List<String> categoriasLivroEFilme(){
+			List<String> lista = new ArrayList<>();
+			
+			lista.add("Aventura");
+			lista.add("Ação");
+			lista.add("Romance");
+			lista.add("Suspense");
+			lista.add("Terror");
+			
+			return lista;
+	}
+	/**
+     * Retorna a lista de categorias possíveis para músicas.
+     * 
+     * @return lista de categorias (POP, Jazz, Rock, Eletrônica, Indie)
+     */
+	private List<String> categoriasMusica(){
+		List<String> lista = new ArrayList<>();
+		
+		lista.add("POP");
+		lista.add("Jazz");
+		lista.add("Rock");
+		lista.add("Eletrônica");
+		lista.add("Indie");
+		
+		return lista;
 	}
 }
